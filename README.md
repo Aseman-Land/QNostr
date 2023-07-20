@@ -1,5 +1,5 @@
 # QNostr-Module
-An standard Nostr module for Qt written using C++ and QtWebSockets.
+Standard Nostr module for Qt written using C++ and QtWebSockets.
 
 ## How to Build
 
