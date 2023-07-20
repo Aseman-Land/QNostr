@@ -20,6 +20,11 @@ public:
     QNostr(const QString &publicKey, const QString &privateKey, QObject *parent = nullptr);
     virtual ~QNostr();
 
+    QString publicKey() const;
+    QString privateKey() const;
+
+    static QString generateNewSecret();
+
     QList<QUrl> relays() const;
     void setRelays(const QList<QUrl> &relays);
 

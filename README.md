@@ -46,7 +46,9 @@ find_package(Qt6 6.0.0 CONFIG REQUIRED COMPONENTS Nostr)
 
 #include <QNostr>
 
-QNostr relay("PUBLIC_KEY", "PRIVATE_KEY");
+const auto secret = QNostr::generateNewSecret();
+
+QNostr relay(secret);
 relay.addRelay(QUrl("wss://RELAY_ADDRESS"));
 
 connect(&relay, &QNostr::connected, [](const QUrl &relay){

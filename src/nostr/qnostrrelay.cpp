@@ -91,9 +91,11 @@ QString QNostrRelay::sendEvent(const QString &content)
     return sendEvent(e);
 }
 
-QString QNostrRelay::sendEvent(Event e)
+QString QNostrRelay::sendEvent(Event e, bool prepared)
 {
-    prepareEvent(e, p->publicKey, p->privateKey);
+    if (!prepared)
+        prepareEvent(e, p->publicKey, p->privateKey);
+
     const auto command = e.serialize();
     if (p->ws->state() == QAbstractSocket::ConnectedState)
         p->ws->sendTextMessage(command);
@@ -242,7 +244,7 @@ QString QNostrRelay::calculateId(const Event &e)
     array << e.content;
 
     QJsonDocument json(array);
-    return QCryptographicHash::hash(json.toJson(QJsonDocument::Compact), QCryptographicHash::Sha256).toHex().toLower();
+    return QString::fromUtf8(QCryptographicHash::hash(json.toJson(QJsonDocument::Compact), QCryptographicHash::Sha256).toHex().toLower());
 }
 
 #pragma GCC diagnostic push
@@ -376,7 +378,7 @@ QString QNostrRelay::Event::serialize() const
     res << QStringLiteral("EVENT");
     res << obj;
 
-    return QJsonDocument(res).toJson(QJsonDocument::Compact);
+    return QString::fromUtf8(QJsonDocument(res).toJson(QJsonDocument::Compact));
 }
 
 QNostrRelay::Event QNostrRelay::Event::deserialize(const QJsonObject &obj)
@@ -433,7 +435,7 @@ QString QNostrRelay::Request::serialize() const
     res << subscriptionId.value_or(QString());
     res << obj;
 
-    return QJsonDocument(res).toJson(QJsonDocument::Compact);
+    return QString::fromUtf8(QJsonDocument(res).toJson(QJsonDocument::Compact));
 }
 
 QString QNostrRelay::Close::serialize() const
@@ -442,5 +444,5 @@ QString QNostrRelay::Close::serialize() const
     res << QStringLiteral("CLOSE");
     res << subscriptionId;
 
-    return QJsonDocument(res).toJson(QJsonDocument::Compact);
+    return QString::fromUtf8(QJsonDocument(res).toJson(QJsonDocument::Compact));
 }

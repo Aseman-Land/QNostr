@@ -64,7 +64,7 @@ public Q_SLOTS:
     void stop();
 
     QString sendEvent(const QString &content);
-    QString sendEvent(Event event);
+    QString sendEvent(Event event, bool prepared = false);
     QString sendRequest(Request request);
     void sendClose(const Close &request);
     void sendClose(const QString &subscriptionId);

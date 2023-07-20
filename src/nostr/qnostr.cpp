@@ -2,6 +2,13 @@
 
 #include <QWebSocket>
 
+#include <openssl/ec.h>
+#include <openssl/ecdh.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+#include <openssl/bio.h>
+#include <openssl/pem.h>
+
 class QNostr::Private
 {
 public:
@@ -33,6 +40,64 @@ QNostr::~QNostr()
     delete p;
 }
 
+QString QNostr::publicKey() const
+{
+    return QString::fromLatin1(p->publicKey);
+}
+
+QString QNostr::privateKey() const
+{
+    return QString::fromLatin1(p->privateKey);
+}
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
+QString QNostr::generateNewSecret()
+{
+    auto keyPair = EC_KEY_new_by_curve_name(NID_secp256k1);
+    if (!keyPair)
+    {
+        qDebug() << "Failed to generate SECP key pair.";
+        return QString();
+    }
+
+    if (EC_KEY_generate_key(keyPair) != 1)
+    {
+        qDebug() << "Failed to generate SECP key pair.";
+        EC_KEY_free(keyPair);
+        return QString();
+    }
+
+    BIO* privateKeyBio = BIO_new(BIO_s_mem());
+    if (!privateKeyBio)
+    {
+        qDebug() << "Failed to create BIO for private key.";
+        return QString();
+    }
+
+    if (!PEM_write_bio_ECPrivateKey(privateKeyBio, keyPair, nullptr, nullptr, 0, nullptr, nullptr))
+    {
+        qDebug() << "Failed to write private key to BIO.";
+        BIO_free(privateKeyBio);
+        return QString();
+    }
+
+    BUF_MEM* privateKeyMem;
+    BIO_get_mem_ptr(privateKeyBio, &privateKeyMem);
+    std::string privateKeyStr(privateKeyMem->data, privateKeyMem->length);
+
+    // Clean up
+    BIO_free_all(privateKeyBio);
+    EC_KEY_free(keyPair);
+
+    auto list = QString::fromStdString(privateKeyStr).split('\n', QString::SkipEmptyParts);
+
+    return list.mid(1, list.size()-2).join(QString());
+}
+
+#pragma GCC diagnostic pop
+
 QList<QUrl> QNostr::relays() const
 {
     return p->relaysOrder;
@@ -62,7 +127,7 @@ void QNostr::addRelay(const QUrl &url)
     if (p->relaysHash.contains(url))
         return;
 
-    auto r = new QNostrRelay(url, p->publicKey, p->privateKey, this);
+    auto r = new QNostrRelay(url, QString::fromLatin1(p->publicKey), QString::fromLatin1(p->privateKey), this);
 
     connect(r, &QNostrRelay::failed, this, [this, url](const QString &id, const QString &reason){ Q_EMIT failed(id, reason, url); });
     connect(r, &QNostrRelay::successfully, this, [this, url](const QString &id){ Q_EMIT successfully(id, url); });
@@ -103,7 +168,7 @@ QString QNostr::sendEvent(QNostrRelay::Event event)
 {
     QNostrRelay::prepareEvent(event, p->publicKey, p->privateKey);
     for (const auto &r: p->relaysHash)
-        r->sendEvent(event);
+        r->sendEvent(event, true);
     return event.id.value();
 
 }
