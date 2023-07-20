@@ -1,5 +1,4 @@
-INCLUDEPATH += .
-QT = network core websockets
+QT += network core websockets
 
 CONFIG += c++17
 
