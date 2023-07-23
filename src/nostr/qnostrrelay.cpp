@@ -14,6 +14,7 @@
 #include <openssl/rand.h>
 #include <openssl/bio.h>
 #include <openssl/pem.h>
+#include <openssl/bn.h>
 
 using namespace std::string_literals;
 
