@@ -259,12 +259,14 @@ QByteArray QNostrRelay::sign(const QByteArray &data, const QByteArray &privateKe
    auto secret = QByteArray::fromBase64(privateKey);
    if (secp256k1_keypair_create(ctx, &keypair, reinterpret_cast<unsigned char *>(secret.data())) != 1)
    {
+       secp256k1_context_destroy(ctx);
        return QByteArray();
    }
 
    std::vector<unsigned char> signature(64);
    if (secp256k1_schnorrsig_sign32(ctx, signature.data(), reinterpret_cast<const unsigned char *>(data.data()), &keypair, nullptr) != 1)
    {
+       secp256k1_context_destroy(ctx);
        return QByteArray();
    }
 
