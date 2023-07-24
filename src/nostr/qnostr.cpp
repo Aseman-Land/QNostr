@@ -91,7 +91,7 @@ QString QNostr::generateNewSecret()
     BIO_free_all(privateKeyBio);
     EC_KEY_free(keyPair);
 
-    auto list = QString::fromStdString(privateKeyStr).split('\n', Qt::SkipEmptyParts);
+    auto list = QString::fromStdString(privateKeyStr).split('\n', QString::SkipEmptyParts);
 
     return list.mid(1, list.size()-2).join(QString());
 }
